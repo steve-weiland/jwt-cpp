@@ -30,28 +30,98 @@ ctest --test-dir build
 
 ## Dependencies
 
-### nkeys-cpp (Required)
+### nkeys-cpp (Required - Auto-fetched)
 
-Must be installed before building jwt-cpp. If not in standard locations, set `CMAKE_PREFIX_PATH`:
+**Default behavior:** jwt-cpp automatically downloads and builds nkeys-cpp via FetchContent if not found.
 
+**For system-installed nkeys-cpp:**
 ```bash
-# From /Users/steve/src/nkeys-cpp
+# Install nkeys-cpp to ~/local
+cd /Users/steve/src/nkeys-cpp
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 cmake --install build --prefix ~/local
 
-# Then use it in jwt-cpp
-export CMAKE_PREFIX_PATH=~/local
+# Configure jwt-cpp to find it
+cd /Users/steve/src/jwt-cpp
+cmake -S . -B build -DCMAKE_PREFIX_PATH=~/local
 ```
 
-Or on macOS with standard install:
+**To force FetchContent build:**
 ```bash
-cmake --install build  # Installs to /usr/local
+cmake -S . -B build -DJWT_USE_SYSTEM_NKEYS=OFF
+```
+
+**Version pinning (for reproducible builds):**
+FetchContent uses the main branch by default. To pin to a specific commit, edit CMakeLists.txt:
+```cmake
+GIT_TAG abc123def456  # Replace main with commit SHA
+```
+
+**Cache management:**
+FetchContent caches downloaded sources in `build/_deps/`. To rebuild from scratch:
+```bash
+rm -rf build/_deps/nkeys-cpp-*
+cmake --build build
 ```
 
 ### nlohmann/json (Auto-fetched)
 
 Header-only JSON library, automatically downloaded by CMake during configuration.
+
+## Dependency Management Strategy
+
+jwt-cpp uses a **hybrid dependency approach**:
+
+1. **nkeys-cpp**: System install preferred, FetchContent fallback
+2. **nlohmann/json**: Always FetchContent (header-only)
+3. **GoogleTest**: System install preferred, FetchContent fallback
+
+### Why This Approach?
+
+**Benefits:**
+- **CLion/IDE compatibility**: No manual dependency installation required
+- **Reproducible builds**: FetchContent ensures exact versions
+- **Flexibility**: Developers can use system packages if preferred
+- **CI/CD friendly**: Works out-of-the-box in clean build environments
+
+**Trade-offs:**
+- First build takes longer (compiles nkeys-cpp from source)
+- Subsequent builds use cached _deps/ folder (fast)
+- System install still supported for package managers
+
+### Customizing Dependencies
+
+```bash
+# Use system packages only (fail if not found)
+cmake -S . -B build -DJWT_USE_SYSTEM_NKEYS=ON
+
+# Force all FetchContent (reproducible builds)
+cmake -S . -B build -DJWT_USE_SYSTEM_NKEYS=OFF
+
+# Mixed approach (default - recommended)
+cmake -S . -B build  # Tries system first, falls back to FetchContent
+```
+
+### Production Version Pinning
+
+For production deployments, pin nkeys-cpp to a specific commit:
+
+```cmake
+# In CMakeLists.txt, change FetchContent_Declare:
+FetchContent_Declare(
+    nkeys-cpp
+    GIT_REPOSITORY https://github.com/steve-weiland/nkeys-cpp.git
+    GIT_TAG abc123def456  # Replace with specific commit SHA
+    GIT_SHALLOW FALSE     # Change to FALSE to allow any commit
+)
+```
+
+To find the current commit SHA:
+```bash
+# If using FetchContent:
+cat build/_deps/nkeys-cpp-src/.git/refs/heads/main
+```
 
 ## Architecture
 

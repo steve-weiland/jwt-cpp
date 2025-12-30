@@ -22,25 +22,59 @@ This library provides JWT (JSON Web Token) encoding and decoding specifically de
 
 - C++20 compatible compiler (GCC 10+, Clang 12+, MSVC 19.29+)
 - CMake 3.20 or higher
-- nkeys-cpp library (from https://github.com/steve-weiland/nkeys-cpp)
+- Git (for automatic dependency fetching)
 
 ### Building
 
-```bash
-# Install nkeys-cpp first (if not already installed)
-cd /path/to/nkeys-cpp
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-cmake --install build --prefix ~/local
+jwt-cpp automatically downloads and builds nkeys-cpp if it's not found on your system.
 
-# Build jwt-cpp
+#### Option 1: Automatic Build (Recommended)
+
+```bash
 cd /path/to/jwt-cpp
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=~/local
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
 # Run tests
 ctest --test-dir build --output-on-failure
 ```
+
+nkeys-cpp will be automatically fetched and built during configuration.
+
+#### Option 2: Using System-Installed nkeys-cpp
+
+If you prefer to use a system-installed version of nkeys-cpp:
+
+```bash
+# Install nkeys-cpp first
+cd /path/to/nkeys-cpp
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+cmake --install build --prefix ~/local
+
+# Build jwt-cpp with system nkeys-cpp
+cd /path/to/jwt-cpp
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=~/local
+cmake --build build
+```
+
+#### Build Options
+
+- `JWT_USE_SYSTEM_NKEYS=ON` (default): Try system-installed nkeys-cpp first, fallback to FetchContent
+- `JWT_USE_SYSTEM_NKEYS=OFF`: Always use FetchContent to build nkeys-cpp from source
+- `JWT_WARNINGS_AS_ERRORS=ON`: Treat compiler warnings as errors
+- `JWT_ENABLE_ASAN=ON`: Enable AddressSanitizer
+
+**Example: Force FetchContent build**
+```bash
+cmake -S . -B build -DJWT_USE_SYSTEM_NKEYS=OFF
+```
+
+#### Build Performance
+
+**First-time builds:** When using FetchContent (default), the first build takes ~90 seconds as it compiles nkeys-cpp from source. Subsequent builds are faster (~35 seconds) as the built library is cached.
+
+**Tip:** If you frequently delete your build directory, consider installing nkeys-cpp to your system to speed up clean builds.
 
 ### Basic Usage (Coming Soon)
 

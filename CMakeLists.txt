@@ -9,6 +9,7 @@ option(JWT_USE_SYSTEM_GTEST "Prefer system-installed GTest if available" ON)
 option(JWT_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(JWT_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(JWT_ENABLE_HARDENING "Enable security hardening flags" ON)
+option(JWT_USE_SYSTEM_NKEYS "Prefer system-installed nkeys-cpp if available" ON)
 
 # --- Global settings -------------------------------------------------------
 set(CMAKE_CXX_STANDARD 20)
@@ -71,34 +72,48 @@ endif()
 
 # --- Dependencies ----------------------------------------------------------
 
-# Find nkeys-cpp (required dependency)
-find_package(nkeys QUIET)
-if (NOT nkeys_FOUND)
-    # Try to find nkeys library manually
-    find_library(NKEYS_LIBRARY NAMES nkeys libnkeys)
-    find_path(NKEYS_INCLUDE_DIR nkeys/nkeys.hpp)
-
-    if (NKEYS_LIBRARY AND NKEYS_INCLUDE_DIR)
-        message(STATUS "Found nkeys: ${NKEYS_LIBRARY}")
-        add_library(nkeys STATIC IMPORTED)
-        set_target_properties(nkeys PROPERTIES
-            IMPORTED_LOCATION "${NKEYS_LIBRARY}"
-            INTERFACE_INCLUDE_DIRECTORIES "${NKEYS_INCLUDE_DIR}"
-        )
-    else()
-        message(FATAL_ERROR "nkeys-cpp library not found. Please install from /Users/steve/src/nkeys-cpp or https://github.com/steve-weiland/nkeys-cpp")
+# Find nkeys-cpp (required) - try system install, fallback to FetchContent
+set(_have_nkeys FALSE)
+if (JWT_USE_SYSTEM_NKEYS)
+    find_package(nkeys QUIET)
+    if (nkeys_FOUND)
+        message(STATUS "Using system-installed nkeys-cpp")
+        set(_have_nkeys TRUE)
     endif()
 endif()
 
-# Fetch nlohmann/json (header-only)
-include(FetchContent)
-FetchContent_Declare(
-    nlohmann_json
-    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-    URL_HASH SHA256=d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-FetchContent_MakeAvailable(nlohmann_json)
+if (NOT _have_nkeys)
+    message(STATUS "System nkeys-cpp not found, using FetchContent to build from source")
+    include(FetchContent)
+    FetchContent_Declare(
+        nkeys-cpp
+        GIT_REPOSITORY https://github.com/steve-weiland/nkeys-cpp.git
+        GIT_TAG main
+        GIT_SHALLOW TRUE
+    )
+    # Configure nkeys-cpp build
+    set(_jwt_build_testing ${BUILD_TESTING})
+    set(NKEYS_WARNINGS_AS_ERRORS ${JWT_WARNINGS_AS_ERRORS} CACHE BOOL "" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
+    FetchContent_MakeAvailable(nkeys-cpp)
+
+    # Restore BUILD_TESTING for jwt-cpp
+    set(BUILD_TESTING ${_jwt_build_testing} CACHE BOOL "" FORCE)
+    message(STATUS "Built nkeys-cpp from source via FetchContent")
+endif()
+
+# Fetch nlohmann/json (header-only) - always use FetchContent
+if (NOT TARGET nlohmann_json)
+    include(FetchContent)
+    FetchContent_Declare(
+        nlohmann_json
+        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+        URL_HASH SHA256=d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
 
 # --- Sources ---------------------------------------------------------------
 set(JWT_SOURCES

@@ -9,18 +9,11 @@ Thank you for your interest in contributing to jwt-cpp! This document provides g
 - C++20 compatible compiler (GCC 10+, Clang 12+, MSVC 19.29+)
 - CMake 3.20 or higher
 - Git
-- nkeys-cpp library (https://github.com/steve-weiland/nkeys-cpp)
 - Basic knowledge of JWT and cryptography (helpful but not required)
 
 ### Setting Up Development Environment
 
 ```bash
-# Ensure nkeys-cpp is installed
-cd /path/to/nkeys-cpp
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-cmake --install build --prefix ~/local
-
 # Clone the repository
 git clone https://github.com/yourorg/jwt-cpp.git
 cd jwt-cpp
@@ -29,8 +22,7 @@ cd jwt-cpp
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Debug \
     -DJWT_ENABLE_ASAN=ON \
-    -DJWT_WARNINGS_AS_ERRORS=ON \
-    -DCMAKE_PREFIX_PATH=~/local
+    -DJWT_WARNINGS_AS_ERRORS=ON
 
 # Build
 cmake --build build
@@ -38,6 +30,22 @@ cmake --build build
 # Run tests
 ctest --test-dir build --output-on-failure
 ```
+
+nkeys-cpp will be automatically fetched and built during configuration.
+
+## Building for Development
+
+jwt-cpp automatically handles dependencies via FetchContent. Just clone and build:
+
+```bash
+git clone https://github.com/steve-weiland/jwt-cpp.git
+cd jwt-cpp
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DJWT_WARNINGS_AS_ERRORS=ON
+cmake --build build
+ctest --test-dir build
+```
+
+No manual dependency installation required! See [CLAUDE.md](CLAUDE.md) for advanced build options.
 
 ## How to Contribute
 
