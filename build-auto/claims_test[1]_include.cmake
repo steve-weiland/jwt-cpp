@@ -1,0 +1,5 @@
+if(EXISTS "/Users/steve/src/jwt-cpp/build-auto/claims_test[1]_tests.cmake")
+  include("/Users/steve/src/jwt-cpp/build-auto/claims_test[1]_tests.cmake")
+else()
+  add_test(claims_test_NOT_BUILT claims_test_NOT_BUILT)
+endif()

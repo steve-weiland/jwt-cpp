@@ -9,6 +9,7 @@ class OperatorClaims : public Claims {
 public:
     /// Create operator claims with the given public key
     explicit OperatorClaims(const std::string& operatorPublicKey);
+    ~OperatorClaims();
 
     // Claims interface
     [[nodiscard]] std::string subject() const override;

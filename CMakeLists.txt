@@ -122,6 +122,8 @@ set(JWT_SOURCES
     src/operator_claims.cpp
     src/account_claims.cpp
     src/user_claims.cpp
+    src/base64url.cpp
+    src/jwt_utils.cpp
 )
 
 # --- Library: jwt ----------------------------------------------------------

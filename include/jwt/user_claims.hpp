@@ -9,6 +9,7 @@ class UserClaims : public Claims {
 public:
     /// Create user claims with the given public key
     explicit UserClaims(const std::string& userPublicKey);
+    ~UserClaims();
 
     // Claims interface
     [[nodiscard]] std::string subject() const override;
@@ -22,6 +23,7 @@ public:
     // User-specific
     void setName(const std::string& name);
     void setExpires(std::int64_t exp);
+    void setIssuer(const std::string& issuerKey);
     void setIssuerAccount(const std::string& accountPublicKey);
     [[nodiscard]] std::optional<std::string> issuerAccount() const;
 

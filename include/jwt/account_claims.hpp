@@ -9,6 +9,7 @@ class AccountClaims : public Claims {
 public:
     /// Create account claims with the given public key
     explicit AccountClaims(const std::string& accountPublicKey);
+    ~AccountClaims();
 
     // Claims interface
     [[nodiscard]] std::string subject() const override;
@@ -22,6 +23,7 @@ public:
     // Account-specific
     void setName(const std::string& name);
     void setExpires(std::int64_t exp);
+    void setIssuer(const std::string& issuerKey);
     void addSigningKey(const std::string& publicKey);
     [[nodiscard]] const std::vector<std::string>& signingKeys() const;
 
