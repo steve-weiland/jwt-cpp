@@ -15,7 +15,7 @@ Thank you for your interest in contributing to jwt-cpp! This document provides g
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourorg/jwt-cpp.git
+git clone https://github.com/steve-weiland/jwt-cpp.git
 cd jwt-cpp
 
 # Build with debug symbols and sanitizers
