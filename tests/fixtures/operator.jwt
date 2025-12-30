@@ -1,0 +1,4 @@
+# Placeholder - will contain sample operator JWT
+# Format: header.payload.signature (Base64URL encoded)
+# Example:
+# eyJhbGciOiJlZDI1NTE5LW5rZXkiLCJ0eXAiOiJKV1QifQ.eyJqdGkiOiJPUEVSQVRPUl9JRCIsImlhdCI6MTYwMDAwMDAwMCwiaXNzIjoiT0FCQy4uLiIsInN1YiI6Ik9BQkMuLi4iLCJuYXRzIjp7InR5cGUiOiJvcGVyYXRvciIsInZlcnNpb24iOjIsInNpZ25pbmdfa2V5cyI6W119fQ.c2lnbmF0dXJl

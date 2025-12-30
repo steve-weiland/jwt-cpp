@@ -1,0 +1,13 @@
+# Placeholder - will contain sample NATS credentials file
+# Format:
+# -----BEGIN NATS USER JWT-----
+# <jwt>
+# ------END NATS USER JWT------
+#
+# ************************* IMPORTANT *************************
+# NKEY Seed printed below can be used to sign and prove identity.
+# NKEYs are sensitive and should be treated as secrets.
+#
+# -----BEGIN USER NKEY SEED-----
+# <seed>
+# ------END USER NKEY SEED------

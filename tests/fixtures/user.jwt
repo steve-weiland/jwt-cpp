@@ -1,0 +1,3 @@
+# Placeholder - will contain sample user JWT
+# Format: header.payload.signature (Base64URL encoded)
+# User JWT signed by account key
