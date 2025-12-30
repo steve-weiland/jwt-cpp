@@ -1,5 +1,0 @@
-if(EXISTS "/Users/steve/src/jwt-cpp/build-auto/cmd_args_test[1]_tests.cmake")
-  include("/Users/steve/src/jwt-cpp/build-auto/cmd_args_test[1]_tests.cmake")
-else()
-  add_test(cmd_args_test_NOT_BUILT cmd_args_test_NOT_BUILT)
-endif()

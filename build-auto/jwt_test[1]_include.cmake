@@ -1,5 +1,0 @@
-if(EXISTS "/Users/steve/src/jwt-cpp/build-auto/jwt_test[1]_tests.cmake")
-  include("/Users/steve/src/jwt-cpp/build-auto/jwt_test[1]_tests.cmake")
-else()
-  add_test(jwt_test_NOT_BUILT jwt_test_NOT_BUILT)
-endif()
