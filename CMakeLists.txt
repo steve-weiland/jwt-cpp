@@ -124,6 +124,7 @@ set(JWT_SOURCES
     src/user_claims.cpp
     src/base64url.cpp
     src/jwt_utils.cpp
+    src/validation.cpp
 )
 
 # --- Library: jwt ----------------------------------------------------------
@@ -193,10 +194,20 @@ if (BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
 
+    add_executable(validation_test tests/validation_test.cpp)
+    target_link_libraries(validation_test PRIVATE jwt ${GTEST_LIBS} Threads::Threads)
+    target_include_directories(validation_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    add_executable(e2e_test tests/e2e_test.cpp)
+    target_link_libraries(e2e_test PRIVATE jwt ${GTEST_LIBS} Threads::Threads)
+    target_include_directories(e2e_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
     include(GoogleTest)
     gtest_discover_tests(jwt_test)
     gtest_discover_tests(claims_test)
     gtest_discover_tests(cmd_args_test)
+    gtest_discover_tests(validation_test)
+    gtest_discover_tests(e2e_test)
 endif()
 
 # --- Install targets -------------------------------------------------------
@@ -215,6 +226,7 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/jwt/operator_claims.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/jwt/account_claims.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/jwt/user_claims.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/jwt/validation.hpp
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jwt
 )
 

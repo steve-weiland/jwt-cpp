@@ -4,10 +4,10 @@
 #include "jwt_utils.hpp"
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <sstream>
 
 namespace jwt {
 
-// Pimpl implementation placeholder
 class UserClaims::Impl {
 public:
     std::string subject_;
@@ -126,13 +126,117 @@ void UserClaims::validate() const {
 }
 
 std::unique_ptr<UserClaims> decodeUserClaims(const std::string& jwt) {
-    // TODO: Implement decoding
-    throw std::runtime_error("User JWT decoding not yet implemented");
+    using namespace internal;
+    using json = nlohmann::json;
+
+    // Parse JWT into its three components
+    auto parts = parseJwt(jwt);
+
+    // Decode and validate header
+    auto header_bytes = base64url_decode(parts.header_b64);
+    std::string header_json(header_bytes.begin(), header_bytes.end());
+    auto header = json::parse(header_json);
+
+    if (!header.contains("alg") || header["alg"] != JWT_ALGORITHM) {
+        throw std::invalid_argument(
+            "Unsupported algorithm: expected '" + std::string(JWT_ALGORITHM) + "'"
+        );
+    }
+
+    // Decode and parse payload
+    auto payload_bytes = base64url_decode(parts.payload_b64);
+    std::string payload_json(payload_bytes.begin(), payload_bytes.end());
+    auto payload = json::parse(payload_json);
+
+    // Validate NATS-specific claims
+    if (!payload.contains("nats")) {
+        throw std::invalid_argument("Missing 'nats' object in JWT payload");
+    }
+    auto nats = payload["nats"];
+
+    if (!nats.contains("type") || nats["type"] != "user") {
+        throw std::invalid_argument(
+            "JWT type mismatch: expected 'user', got '" +
+            (nats.contains("type") ? nats["type"].get<std::string>() : "missing") + "'"
+        );
+    }
+
+    if (!nats.contains("version") || nats["version"] != JWT_VERSION) {
+        throw std::invalid_argument(
+            "Unsupported JWT version: expected " + std::to_string(JWT_VERSION)
+        );
+    }
+
+    // Extract required fields
+    std::string subject = payload.at("sub").get<std::string>();
+    std::string issuer = payload.at("iss").get<std::string>();
+    std::int64_t iat = payload.at("iat").get<std::int64_t>();
+
+    // Create UserClaims object
+    auto claims = std::make_unique<UserClaims>(subject);
+
+    // Populate required fields (direct access via friend declaration)
+    claims->impl_->issuer_ = issuer;
+    claims->impl_->issuedAt_ = iat;
+
+    // Populate optional fields
+    if (payload.contains("name")) {
+        claims->setName(payload["name"].get<std::string>());
+    }
+
+    if (payload.contains("exp")) {
+        claims->setExpires(payload["exp"].get<std::int64_t>());
+    }
+
+    // Extract issuer_account if present
+    if (nats.contains("issuer_account")) {
+        claims->setIssuerAccount(nats["issuer_account"].get<std::string>());
+    }
+
+    // Validate the decoded claims
+    claims->validate();
+
+    return claims;
 }
 
 std::string formatUserConfig(const std::string& jwt, const std::string& seed) {
-    // TODO: Implement creds file formatting
-    throw std::runtime_error("Creds file formatting not yet implemented");
+    if (jwt.empty()) {
+        throw std::invalid_argument("JWT cannot be empty");
+    }
+    if (seed.empty()) {
+        throw std::invalid_argument("Seed cannot be empty");
+    }
+    if (seed[0] != 'S' || seed[1] != 'U') {
+        throw std::invalid_argument("Seed must be a user seed (starting with 'SU')");
+    }
+
+    std::ostringstream oss;
+
+    // JWT section
+    oss << "-----BEGIN NATS USER JWT-----\n";
+
+    // Wrap JWT at 64 characters per line for readability
+    for (size_t i = 0; i < jwt.length(); i += 64) {
+        oss << jwt.substr(i, 64) << "\n";
+    }
+
+    oss << "------END NATS USER JWT------\n";
+    oss << "\n";
+
+    // Warning message
+    oss << "************************* IMPORTANT *************************\n";
+    oss << "NKEY Seed printed below can be used to sign and prove identity.\n";
+    oss << "    NKEYs are sensitive and should be treated as secrets.\n";
+    oss << "\n";
+
+    // Seed section
+    oss << "-----BEGIN USER NKEY SEED-----\n";
+    oss << seed << "\n";
+    oss << "------END USER NKEY SEED------\n";
+    oss << "\n";
+    oss << "*************************************************************\n";
+
+    return oss.str();
 }
 
-} // namespace jwt
+}

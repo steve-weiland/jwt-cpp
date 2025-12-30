@@ -9,7 +9,7 @@ class UserClaims : public Claims {
 public:
     /// Create user claims with the given public key
     explicit UserClaims(const std::string& userPublicKey);
-    ~UserClaims();
+    ~UserClaims() override;
 
     // Claims interface
     [[nodiscard]] std::string subject() const override;
@@ -28,6 +28,7 @@ public:
     [[nodiscard]] std::optional<std::string> issuerAccount() const;
 
 private:
+    friend std::unique_ptr<UserClaims> decodeUserClaims(const std::string&);
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
@@ -38,4 +39,4 @@ private:
 /// Format a user JWT and seed into a creds file
 [[nodiscard]] std::string formatUserConfig(const std::string& jwt, const std::string& seed);
 
-} // namespace jwt
+}

@@ -7,7 +7,6 @@
 
 namespace jwt {
 
-// Pimpl implementation placeholder
 class OperatorClaims::Impl {
 public:
     std::string subject_;
@@ -123,8 +122,79 @@ void OperatorClaims::validate() const {
 }
 
 std::unique_ptr<OperatorClaims> decodeOperatorClaims(const std::string& jwt) {
-    // TODO: Implement decoding
-    throw std::runtime_error("Operator JWT decoding not yet implemented");
+    using namespace internal;
+    using json = nlohmann::json;
+
+    // Parse JWT into its three components
+    auto parts = parseJwt(jwt);
+
+    // Decode and validate header
+    auto header_bytes = base64url_decode(parts.header_b64);
+    std::string header_json(header_bytes.begin(), header_bytes.end());
+    auto header = json::parse(header_json);
+
+    if (!header.contains("alg") || header["alg"] != JWT_ALGORITHM) {
+        throw std::invalid_argument(
+            "Unsupported algorithm: expected '" + std::string(JWT_ALGORITHM) + "'"
+        );
+    }
+
+    // Decode and parse payload
+    auto payload_bytes = base64url_decode(parts.payload_b64);
+    std::string payload_json(payload_bytes.begin(), payload_bytes.end());
+    auto payload = json::parse(payload_json);
+
+    // Validate NATS-specific claims
+    if (!payload.contains("nats")) {
+        throw std::invalid_argument("Missing 'nats' object in JWT payload");
+    }
+    auto nats = payload["nats"];
+
+    if (!nats.contains("type") || nats["type"] != "operator") {
+        throw std::invalid_argument(
+            "JWT type mismatch: expected 'operator', got '" +
+            (nats.contains("type") ? nats["type"].get<std::string>() : "missing") + "'"
+        );
+    }
+
+    if (!nats.contains("version") || nats["version"] != JWT_VERSION) {
+        throw std::invalid_argument(
+            "Unsupported JWT version: expected " + std::to_string(JWT_VERSION)
+        );
+    }
+
+    // Extract required fields
+    std::string subject = payload.at("sub").get<std::string>();
+    std::string issuer = payload.at("iss").get<std::string>();
+    std::int64_t iat = payload.at("iat").get<std::int64_t>();
+
+    // Create OperatorClaims object
+    auto claims = std::make_unique<OperatorClaims>(subject);
+
+    // Populate required fields (direct access via friend declaration)
+    claims->impl_->issuer_ = issuer;
+    claims->impl_->issuedAt_ = iat;
+
+    // Populate optional fields
+    if (payload.contains("name")) {
+        claims->setName(payload["name"].get<std::string>());
+    }
+
+    if (payload.contains("exp")) {
+        claims->setExpires(payload["exp"].get<std::int64_t>());
+    }
+
+    // Extract signing keys if present
+    if (nats.contains("signing_keys") && nats["signing_keys"].is_array()) {
+        for (const auto& key : nats["signing_keys"]) {
+            claims->addSigningKey(key.get<std::string>());
+        }
+    }
+
+    // Validate the decoded claims
+    claims->validate();
+
+    return claims;
 }
 
-} // namespace jwt
+}

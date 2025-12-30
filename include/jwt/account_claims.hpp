@@ -9,7 +9,7 @@ class AccountClaims : public Claims {
 public:
     /// Create account claims with the given public key
     explicit AccountClaims(const std::string& accountPublicKey);
-    ~AccountClaims();
+    ~AccountClaims() override;
 
     // Claims interface
     [[nodiscard]] std::string subject() const override;
@@ -28,6 +28,7 @@ public:
     [[nodiscard]] const std::vector<std::string>& signingKeys() const;
 
 private:
+    friend std::unique_ptr<AccountClaims> decodeAccountClaims(const std::string&);
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
@@ -35,4 +36,4 @@ private:
 /// Decode an account JWT
 [[nodiscard]] std::unique_ptr<AccountClaims> decodeAccountClaims(const std::string& jwt);
 
-} // namespace jwt
+}

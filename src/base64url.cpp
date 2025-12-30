@@ -2,8 +2,7 @@
 #include <stdexcept>
 #include <array>
 
-namespace jwt {
-namespace internal {
+namespace jwt::internal {
 
 namespace {
     // Base64 URL alphabet (RFC 4648): differs from standard in chars 62 and 63
@@ -143,5 +142,5 @@ std::vector<std::uint8_t> base64url_decode(std::string_view input) {
     return result;
 }
 
-} // namespace internal
-} // namespace jwt
+}
+

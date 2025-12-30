@@ -39,4 +39,4 @@ public:
 /// Verify a JWT signature
 [[nodiscard]] bool verify(const std::string& jwt);
 
-} // namespace jwt
+}
